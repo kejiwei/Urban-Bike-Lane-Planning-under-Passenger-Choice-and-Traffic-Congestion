@@ -1,0 +1,219 @@
+
+\documentclass[trsc,nonblindrev]{informs3noheader}
+\OneAndAHalfSpacedXI 
+\usepackage{natbib}
+ \bibpunct[, ]{(}{)}{,}{a}{}{,}%
+ \def\bibfont{\small}%
+ \def\bibsep{\smallskipamount}%
+ \def\bibhang{24pt}%
+ \def\newblock{\ }%
+ \def\BIBand{and}%
+\TheoremsNumberedThrough     
+\EquationsNumberedThrough    
+\newcommand{\hl}[1]{\textcolor{red}{#1}}
+\begin{document}
+\RUNAUTHOR{Wei, Liu}
+
+\RUNTITLE{Bike Lane Planning  Under Passengers and Congestion}
+
+\TITLE{Urban Bike Lane Planning  under Passenger Choice and Traffic Congestion}
+
+
+\ARTICLEAUTHORS{%
+\AUTHOR{Keji Wei}
+\AFF{Airline Solutions Operations Research, Sabre Holdings, Southlake,TX 76092, \EMAIL{keji.wei@sabre.com}, \URL{}}
+\AUTHOR{Sheng Liu}
+\AFF{Rotman School of Management, University of Toronto, \EMAIL{sheng.liu@rotman.utoronto.ca} \URL{}}
+} 
+
+\ABSTRACT{%
+Text of your abstract 
+}
+
+\KEYWORDS{}
+\HISTORY{}
+
+\maketitle
+\section{Mathematical Description}
+In this section, we present our Mixed Integer Nonlinear programming (MINLP) model of bike lane planning with endogenous passenger choice and traffic congestion. 
+
+\subsection{Mathematical Notations}
+\textbf{Sets}\vspace{-12 pt}
+\begin{flalign}
+&\mathcal{Q}: \text{Set of OD (origin-destination) pairs, indexed by } (o,d).\nonumber\\
+&\mathcal{H}: \text{Set of passenger types, indexed by } h.\nonumber\\
+&\mathcal{TT}: \text{ Set of all traffic timeslots during the optimization horizon, indexed by } tt.\nonumber\\
+&\mathcal{I}^\text{all}: \text{Set of possible cycling itineraries, indexed by } i.\nonumber\\
+&\mathcal{I}_{od}: \text{Subset of cycling itineraries for passengers traveling on OD pair } (o,d).\nonumber\\
+&\mathcal{I}_{s}: \text{Set of all cycling itineraries which use road segment } s. \nonumber
+\end{flalign}
+
+\textbf{Parameters}\vspace{-12 pt}
+\begin{flalign}
+&Bud: \text{Budget for bile lanes building}. \nonumber\\
+&Con_{s}: \text{Total construction cost on road segment } s. \nonumber\\
+&Dem_{od,h}: \text{Demand of passengers of type } h \text{ on OD pair } (o,d). \nonumber\\
+&Veh_{s,tt}: \text{Number of vehicles on road segment } s \text{ in traffic timeslot }tt \text{ (excluding hired vehicles).}\nonumber\\
+&DC_{od,h}: \text{Cost of the outside option for passengers with type }h \text{ on OD pair }(o,d). \nonumber\\
+&A_{od,h}^O: \text{Attractiveness of the outside option for passengers with type }h \text{ on OD pair }(o,d).\nonumber
+\end{flalign}
+
+
+\textbf{Decision Variables}
+\begin{flalign}
+& x_{s}= \left\{
+	\begin{array}{ll}
+	1 & \quad \text{if build a bike lane on road segment } s	\nonumber	\\
+	0 & \quad \text{otherwise}
+	\end{array} \right.	\\
+	&a_{i,h}^{C}/d_{i,h}^{C}/tc_{i,h}^{C}: \text{Attractiveness (resp., the number of passengers and generalized travel cost) corresponding to} \nonumber\\
+&\text{ cycling itinerary }i \text{ for passengers with type }h.\nonumber\\
+&a_{od,h,tt}^{HV}/d_{od,h,tt}^{HV}/tc^{HV}_{od,h,tt}: \text{Attractiveness (resp., number of passengers and generalized travel cost) corresponding to} \nonumber\\
+&\text{hired-vehicle trips departing in traffic timeslot } tt \text{ for passengers with type $h$ on OD pair } (o,d). \nonumber\\
+&ope^{HV}_{od,tt}: \text{Operating cost of  ride-hailing vehicles starting in traffic timeslot }tt \text{ on OD pair } (o,d).\nonumber\\
+&ext^{HV}_{od,tt}: \text{Environmental cost of  ride-hailing vehicles starting in traffic timeslot }tt \text{ on OD pair }(o,d),\nonumber\\
+&d_{od,h}^O: \text{ The number of passengers who choose outside option with type }h \text{ on OD pair }(o,d).\nonumber\\
+&ratio^{HV}_{od,p,tt}: \text{Of all hired-vehicle providers serving a passenger on OD pair }(o,d) \text{ and starting} \nonumber\\
+&\text{ service in traffic timeslot } tt \text{, the fraction who use travel path }p.\nonumber\\
+&tra_{s,tt}: \text{Per-vehicle travel time on road segment }s \text{ in traffic timeslot } tt.\nonumber\\
+&env^V_{s,tt}: \text{Per-vehicle environmental cost of other vehicles on road segment }s \text{ during traffic timeslot } tt,\nonumber\\
+&\text{ including environmental, public health, and safety-related costs.}\nonumber\\ 
+&ope^V_{s,tt}: \text{Per-vehicle operating cost for other vehicles on road segment }s \text{ in traffic timeslot } tt.\nonumber\\
+&width_s:\text{travel lanes width of road segment } s. \text{ (bike lanes would reduce travel lanes' width)}\nonumber\\
+&tc^V_{s,tt}: \text{Per-vehicle travel time cost of other vehicles on road segment }s \text{ in traffic timeslot }tt.\nonumber 
+\end{flalign}
+
+%$\mathcal{Q}$: Set of OD pairs, indexed by $(o,d)$.\\
+%$\mathcal{H}$: Set of passenger types, indexed by $h$.\\
+%$\mathcal{SN}^{all}$: Set of road segments in the studied road network, indexed by $s$.\\
+%$\mathcal{P}^{all}$: Set of all travel paths on the road network, indexed by $p$. \\
+%$\mathcal{P}_{od}$: Subset of possible travel paths from $o$ to $d$.\\
+%$\mathcal{I}_{od}$: Subset of public transit itineraries from $o$ to $d$.\\
+%$\mathcal{SN}_p$: Subset of road segments on travel path $p$.\\
+%$\mathcal{TT}:$ Set of all traffic timeslots in the studied period, indexed by $tt$.
+
+\subsection{Model Formulation}
+\hl{I changed the meaning of $d_{i,h}^{C}, d_{od,h,tt}^{HV}, d_{od,h}^{O}$ to be the absolute demand instead of market share (Sheng). Also, attractiveness is redefined to be the disutility function.} 
+The bike lane planning model can be formulated as follows:
+\begin{align}
+      \min\ &\sum_{h\in \mathcal{H}}\sum_{(o,d)\in\mathcal{Q}}\sum_{i\in \mathcal{I}_{od}} d_{i,h}^{C}\times tc_{i,h}^{C} + \sum_{tt \in \mathcal{TT}}\sum_{h\in \mathcal{H}}\sum_{(o,d)\in \mathcal{Q}} d_{od,h,tt}^{HV}\times (tc^{HV}_{od,h,tt}+ope^{HV}_{od,tt}+env^{HV}_{od,tt}) \nonumber\\
+      & \sum_{tt \in \mathcal{TT}} \sum_{s\in \mathcal{SN}^{all}}(ope^V_{s,tt}+env^V_{s,tt}+tc^V_{s,tt})\times Veh_{s,tt}+ \nonumber\\
+      &\sum_{h\in \mathcal{H}}\sum_{(o,d)\in \mathcal{Q}}  d_{od,h}^{O}\times DC_{od,h} + \sum_{s\in \mathcal{SN}^{all}} Con_s\times x_s \label{obj}\\ 
+    s.t.\ & \textbf{Budget Constraint:} \nonumber \\ 
+    & \sum_{s\in \mathcal{SN}^{all}} Con_s\times x_s \leq Bud  \label{BudgetCons}\\
+              & \textbf{Demand Constraints:} \nonumber \\
+&\sum_{i\in \mathcal{I}_{od}} d_{i,h}^{C}+\sum_{tt \in \mathcal{TT}}d_{od,h,tt}^{HV}+d_{od,h}^O = Dem_{od,h}, \text{~~~}\forall (o,d)\in  \mathcal{Q}, h\in  \mathcal{H} \label{Marketshare}\\
+               & A_{od,h}^O \times d_{od,h,tt}^{HV}= a_{od,h,tt}^{HV}\times d_{od,h}^O,\text{~~~}\forall (o,d)\in  \mathcal{Q}, h\in  \mathcal{H}, tt\in \mathcal{TT}\label{demandsplitting2}\\
+& A_{od,h}^O\times  d_{i,h}^{C}\leq a_{i,h}^{C}\times d_{od,h}^O,\text{~~~}\forall i\in  \mathcal{I}_{od}, {(o,d)}\in \mathcal{Q}, h\in  \mathcal{H} \label{demandsplitting1}\\
+& \textbf{Itinerary Selection Constraints:(can be dropped)} \nonumber \\
+& d_{i,h}^{C}\leq x_s,\text{~~~}\forall s\in \mathcal{SN}^{all}, i\in  \mathcal{I}_{s}, h\in  \mathcal{H} \label{Itineraryselection}\\
+& \textbf{Restriping Existing Roads With Bike Lanes:} \nonumber \\
+& \quad\mathbf{width}=f_{ReduceS}(\mathbf{x})
+\label{Restriping Existing Roads}\\
+    &\textbf{Traffic Flow Assignment: } [\mathbf{\mathbf{ratio^{HV}}},\mathbf{tra},\mathbf{tc^V}]=f_{Rout}(\mathbf{s^{HV}}) \label{User Equilibrium Function}\\
+  &\textbf{Hired Vehicle Fare: } \mathbf{hvfare}=f_{hvfare}(\mathbf{ratio^{HV}},\mathbf{tra}), \label{Fare Constraint}\\    
+    &\textbf{Generalized Travel Cost and Attractiveness Calculations (add for Cyclists):} \nonumber \\
+ &\quad\mathbf{tc^{HV}}=f_{CostHV}(\mathbf{ratio^{HV}},\mathbf{tra}) \label{ride-hailing cost}\\
+&\quad\mathbf{a^{HV}}=f_{AttrHV}(\mathbf{tc^{HV}}, \mathbf{hvfare}) \label{AttracR}\\
+    &\textbf{Operating Costs and Environmental Costs Calculations:} \nonumber \\
+&\quad\mathbf{ope^{HV}}=f_{OpeHV}( \mathbf{tra}, \mathbf{ratio^{HV}})    \label{OpeVehicle}\\
+&\quad\mathbf{env^{HV}}=f_{EnvHV}( \mathbf{tra}, \mathbf{ratio^{HV}})    \label{ExtVehicle}\\
+&\quad\mathbf{ope^V}=f_{OpeV}( \mathbf{tra})  \label{OpeVehicleV}\\
+&\quad\mathbf{env^V}=f_{EnvV}( \mathbf{tra})  \label{ExtVehicleV}\\
+& \textbf{Domain of Definition:} \nonumber \\
+&\mathbf{x} \in \{0,1\} \label{domain4}\\
+&\mathbf{d^{HV}},\mathbf{d^{C}},\mathbf{d^{O}}\geq 0 \label{domain1}   \\
+&\mathbf{tc^{C}},\mathbf{tc^{HV}},\mathbf{ope^{HV}},\mathbf{env^{HV}}, \mathbf{tra}, \mathbf{tc^{V}},\mathbf{env^V}, \mathbf{ope^V}, \mathbf{ratio^{HV}}, \mathbf{rhfare}\geq 0 \label{domain2}  \\
+&\mathbf{a^{C}}, \mathbf{a^{HV}}\geq 0 \label{domain3}   
+\end{align}
+\textbf{Objective Function}: The model minimizes the system wide cost of the urban transportation system consisting of the bike lanes building, the hired vehicle operators, all passengers(those taking either cycling, hired-vehicles and outside option) and all vehicles on the road network. The objective function includes five parts. The first term of objective function is the travel cost to passengers who take cycling. The second term is the bike lanes building cost. The third term is the hired-vehicle cost, including the cost to hired-vehicle passengers, the operating cost of hired-vehicles and its environmental cost (e.g., carbon emissions which creating more environmental pollution). The fourth term includes the travel time cost, operating cost and environmental cost corresponding to all other vehicles on the roads. The last terms is the cost borne by passengers who chose other transportation modes.
+
+\textbf{Budget Constraint} \eqref{BudgetCons} ensure that the total cost spent on building bike lanes cannot exceed the budget limit. 
+
+\textbf{Demand Constraints:} Constraints \eqref{Marketshare} ensure that the market shares across all alternatives (i.e., public transit itineraries, hired-vehicle departure timeslots, and the outside option) sum up to 1 for each passenger type on every OD pair. Next, we use the Sales Based Linear Programming (SBLP) model from \citet{Gallego2015} to incorporate passenger choice into our model: Constraints  \eqref{demandsplitting2} and \eqref{demandsplitting1}, respectively, ensure that the market share of every hired-vehicle and bike is proportional to its attractiveness for every passenger type on every OD pair. 
+
+\textbf{Itinerary Selection Constraints:} Constraints \eqref{Itineraryselection} ensure that no passenger can be assigned to an cycling itinerary if any of its road segment is not selected for bike line. 
+
+\textbf{Restriping Existing Roads With Bike Lanes:} Constraints \eqref{Restriping Existing Roads} consider the impacts of building bike lanes on existing road segments, like reduce travel-lane widths or reduce number of travel lanes.
+
+\textbf{Traffic Flow Assignment:} Constraints \eqref{User Equilibrium Function} assign paths to each hired-vehicle trip, given the hired-vehicl market share ($s_{od,h,tt}^R$). % We might need to give more related information for that function in solution approach part.
+It returns the fraction of hired vehicles on each path ($ratio^{HV}_{od,p,tt}$), the travel times ($tra_{s,tt}$) and the travel costs ($tc^V_{s,tt}$).
+
+\textbf{Hired Vehicle Fare:} Constraints \eqref{Fare Constraint} calculate the fare for each ride-hailing trip ($hvfare_{od,tt}$) as a function of the distance (given by $ratio^{HV}_{od,p,tt}$) and the in-vehicle time ($tra_{s,tt}$). We assume that the waiting time of hired-vehicle passengers not affected by the transit schedule changes.
+
+\subsection{Bi-level Programming Reformulation}
+We will introduce two lower-level programs for the passenger choice model and traffic flow assignment model, respectively. 
+
+\textbf{Passenger Choice}. The constraints (XX) - (XX) can be equivalently represented using the following convex program (I changed the definition of $\mathbf{s}$ for the ease of exposition). 
+\begin{align}
+    \min_{\mathbf{s} \geq 0}&\quad \sum_{h\in \mathcal{H}}\sum_{(o,d)\in\mathcal{Q}} \left[ \sum_{i\in {I}_{od}} \left( d_{i,h}^C\ln d_{i,h}^C + d_{i,h}^C a_{i,h}^C \right) + \sum_{tt \in \mathcal{TT}} \left(d_{od,h,tt}^{HV}\ln d_{od,h,tt}^{HV} + d_{od,h,tt}^{HV} a_{od,h,tt}^{HV} \right)  + d_{od,h}^O \ln d_{od,h}^O + d_{od,h}^Oa_{od,h}^O \right] \\
+    s.t. \quad &  \sum_{i\in {I}_{od}}  d_{i,h}^C + \sum_{tt \in \mathcal{TT}} d_{od,h,tt}^{HV} + d_{od,h}^O  = Dem_{od,h}, \quad \forall (o,d)\in  \mathcal{Q}, h\in  \mathcal{H} 
+\end{align}
+Note that the function $d \ln d$ is convex for $d>0$, we adopt a piecewise linear approximation 
+\[  (\ln d^n + 1)d - d^n = a_n d + b_n, \]
+where $d^n, n = 1,\dots N$ are sample points on the interval of $d$. We also let $\omega_{i,h}^C=d_{i,h}^C\ln d_{i,h}^C, \omega_{od,h, tt}^{HV}=d_{od,h,tt}^{HV}\ln d_{od,h,tt}^{HV}, \omega_{od,h}^O=d_{od,h}^O \ln d_{od,h}^O $. Then the linearized program is %Do we really need those approximiation constraints 24-26
+\begin{align}
+    \min_{\mathbf{s} \geq 0}&\quad \sum_{h\in \mathcal{H}}\sum_{(o,d)\in\mathcal{Q}} \left[ \sum_{i\in {I}_{od}} \left( \omega_{i,h}^C + d_{i,h}^C a_{i,h}^C \right) + \sum_{tt \in \mathcal{TT}} \left(\omega_{od,h, tt}^{HV} + d_{od,h,tt}^{HV} a_{od,h,tt}^{HV} \right)  + \omega_{od,h}^O + d_{od,h}^Oa_{od,h}^O \right] \\
+    s.t. \quad &  \sum_{i\in {I}_{od}}  d_{i,h}^C + \sum_{tt \in \mathcal{TT}} d_{od,h,tt}^{HV} + d_{od,h}^O  = Dem_{od,h}, \quad \forall (o,d)\in  \mathcal{Q}, h\in  \mathcal{H}  \label{eqn:choice1}\\
+    & \omega_{i,h}^C \geq a_n d_{i,h}^C + b_n, \quad \forall n \in \mathcal{N}, i\in {I}_{od}, (o,d)\in\mathcal{Q}, h\in \mathcal{H} \\
+    & \omega_{od ,h, tt}^{HV} \geq a_n d_{od,h, tt}^{HV} + b_n, \quad \forall n \in \mathcal{N}, (o,d)\in\mathcal{Q}, h\in \mathcal{H}, tt \in \mathcal{TT}\\
+    & \omega_{od,h}^O \geq a_n d_{od,h}^Oa_{od,h}^O + b_n, \quad \forall n \in \mathcal{N}, (o,d)\in\mathcal{Q}, h\in \mathcal{H}. \label{eqn:choice4}
+\end{align}
+The optimality condition can be expressed as
+\begin{align}
+    & \sum_{h\in \mathcal{H}}\sum_{(o,d)\in\mathcal{Q}} \lambda_{od,h} Dem_{od,h} + \sum_{h\in \mathcal{H}}\sum_{(o,d)\in\mathcal{Q}} \sum_{n\in\mathcal{N}} b_n\left( \sum_{i\in {I}_{od}} v_{i,h,n}^C  +  \sum_{tt \in \mathcal{TT}}  v_{od, h, tt, n}^{HV} + v_{od, h, n}^O   \right) \nonumber \\
+    & = \sum_{h\in \mathcal{H}}\sum_{(o,d)\in\mathcal{Q}} \left[ \sum_{i\in {I}_{od}} \left( \omega_{i,h}^C + d_{i,h}^C a_{i,h}^C \right) + \sum_{tt \in \mathcal{TT}} \left(\omega_{od,h, tt}^{HV} + d_{od,h,tt}^{HV} a_{od,h,tt}^{HV} \right)  + \omega_{od,h}^O + d_{od,h}^Oa_{od,h}^O \right] \\
+    & \sum_{n\in \mathcal{N}}  v_{i,h,n}^C = 1, \quad \forall i\in {I}_{od}, (o,d)\in\mathcal{Q}, h\in \mathcal{H} \\
+    & \sum_{n\in \mathcal{N}} v_{od, h, tt, n}^{HV} = 1, \quad \forall (o,d)\in\mathcal{Q}, h\in \mathcal{H}, tt \in \mathcal{TT} \\
+    & \sum_{n\in \mathcal{N}} v_{od, h, n}^O = 1, \quad \forall (o,d)\in\mathcal{Q}, h\in \mathcal{H} \\
+    & \lambda_{od,h} - \sum_{n\in \mathcal{N}} a_n v_{i,h,n}^C \leq a_{i,h}^C, \quad \forall i\in {I}_{od}, (o,d)\in\mathcal{Q}, h\in \mathcal{H} \\
+    & \lambda_{od,h} - \sum_{n\in \mathcal{N}} a_n v_{od, h, tt, n}^{HV} \leq a_{od, h, tt}^{HV}, \quad  \forall (o,d)\in\mathcal{Q}, h\in \mathcal{H}, tt \in \mathcal{TT} \\
+    &  \lambda_{od,h} - \sum_{n\in \mathcal{N}} a_n v_{od, h, n}^O  \leq a_{od, h}^O, \quad \forall (o,d)\in\mathcal{Q}, h\in \mathcal{H}\\
+    & \mathbf{v}^C, \mathbf{v}^{HV}, \mathbf{v}^O \geq 0, \text{and (\ref{eqn:choice1})-(\ref{eqn:choice4})}
+\end{align}
+The above constraints are linear except the bilinear terms $d_{i,h}^C a_{i,h}^C$ and  $d_{od,h,tt}^{HV} a_{od,h,tt}^{HV}$ (because $a_{i,h}^C$ depends on the bike lane decision while $a_{od,h,tt}^{HV}$ depends on the traffic equilibrium). 
+
+Note that $a_{i,h}^C = tc_{i,h}^C - \sum_{s \in \mathcal{S}(i)} x_s$, then $d_{i,h}^C a_{i,h}^C = d_{i,h}^C tc_{i,h}^C  - d_{i,h}^C\sum_{s \in \mathcal{S}(i)} x_s$, where $tc_{i,h}^C$ is a constant. Because $x_s$ is binary, we can introduce auxiliary variables to linearize $d_{i,h}^C\sum_{s \in \mathcal{S}(i)} x_s$. For $d_{od,h,tt}^{HV} a_{od,h,tt}^{HV}$, consider a simple form where $a_{od,h,tt}^{HV} =  tc_{od,h,tt}^{HV} = \sum_{p \in \mathcal{P}_{od}} ratio_{od,p,tt}^{HV} \sum_{s\in p} tra_{s,tt} $, then $d_{od,h,tt}^{HV} a_{od,h,tt}^{HV} = \sum_{p \in \mathcal{P}_{od}} d_{od,h,tt}^{HV} ratio_{od,p,tt}^{HV} \sum_{s\in p} tra_{s,tt} =  \sum_{p \in \mathcal{P}_{od}} flow_p^{tt} \sum_{s\in p} tra_{s,tt} = \sum_{p \in \mathcal{P}_{od}} \sum_{s\in \mathcal{SN}^{all}} \delta_{ps}^{tt} flow_p^{tt} tra_{s,tt}$. As a result, $\sum_{h\in \mathcal{H}}\sum_{(o,d)\in\mathcal{Q}} \sum_{tt \in \mathcal{TT}} d_{od,h,tt}^{HV} a_{od,h,tt}^{HV}$ = Total travel time of all vehicles? 
+
+%involves two continuous variables, we need to follow the technique in XXX.
+
+\textbf{Traffic flow}. The traffic flow assignment flow problem is a convex program (Wardrop's user equilibrium):
+\begin{align}
+    \min_{\mathbf{flow, z} \geq 0}&\quad \sum_{tt\in \mathcal{TT}} \sum_{s \in \mathcal{SN}^{all}} \int_0^{z_s^{tt}} tra_{s,tt}(v) dv \label{eqn:trafficobj}\\
+    s.t. \quad  &  \sum_{p\in \mathcal{P}_{od}} flow_{p}^{tt} = D_{od}^{tt}, \quad \forall (o,d) \in \mathcal{Q}, tt \in \mathcal{TT}, \\
+    & z_s^{tt} =  \sum_{(o,d) \in \mathcal{Q}} \sum_{p\in \mathcal{P}_{od}} \delta_{ps}^{tt} flow_{p}^{tt}, \quad \forall s \in \mathcal{SN}^{all}, tt \in \mathcal{TT}
+\end{align}
+where $D_{od}^{tt} = \sum_{h \in \mathcal{H}} d_{od,h,tt}^{HV}$. Because the objective function (\ref{eqn:trafficobj}) is convex, we can employ a piecewise linear approximation as follows
+\begin{align}
+\tag{TRA-LIN}
+   \min_{\mathbf{flow\geq 0, z, u}}&\quad \sum_{tt\in \mathcal{TT}} \sum_{s \in \mathcal{SN}^{all}} u_s^{tt}  \\
+    s.t. \quad  &  u_s^{tt} \geq a_r' + b_r' z_s^{tt},\quad \forall r\in \mathcal{R}, s \in \mathcal{SN}^{all}, tt \in \mathcal{TT} \label{eqn:traffic_constr1}\\
+    & \sum_{p\in \mathcal{P}_{od}} flow_{p}^{tt} = D_{od}^{tt}, \quad \forall (o,d) \in \mathcal{Q}, tt \in \mathcal{TT}, \\
+    & z_s^{tt} =  \sum_{(o,d) \in \mathcal{Q}} \sum_{p\in \mathcal{P}_{od}} \delta_{ps}^{tt} flow_{p}^{tt}, \quad \forall s \in \mathcal{SN}^{all}, tt \in \mathcal{TT} \label{eqn:traffic_constr3}
+\end{align}
+where $a_r', b_r'$ are the intercept and slope of the piecewise linear segments used to approximate $\int_0^{z_s^{tt}} tra_{s,tt}(v) dv$ given $|\mathcal{R}|$ sample points in the feasible range of $z_s^{tt}$. Then we write down the optimality condition of (TRA-LIN) as
+\begin{align}
+    & \sum_{r\in \mathcal{R}} \sum_{s \in \mathcal{SN}^{all}} \sum_{tt \in \mathcal{TT}} \alpha_{s,r}^{tt} a_r' + \sum_{(o,d) \in \mathcal{Q}}  \sum_{tt \in \mathcal{TT}} \beta_{od}^{tt} D_{od}^{tt} = \sum_{tt\in \mathcal{TT}} \sum_{s \in \mathcal{SN}^{all}} u_s^{tt} \\
+    & \sum_{r\in \mathcal{R}} \alpha_{s,r}^{tt} = 1, \quad \forall  s \in \mathcal{SN}^{all}, tt \in \mathcal{TT} \\
+    &  \sum_{(o,d) \in \mathcal{Q}:\ p \in \mathcal{P}_{od}} \beta_{od}^{tt} - \sum_{s \in \mathcal{SN}^{all}} \delta_{ps}^{tt} \gamma_s^{tt} \leq 0,\quad \forall p \in \mathcal{P}, tt \in \mathcal{TT} \\
+    & -\sum_{r \in \mathcal{R}} b_r' \alpha_{s,r}^{tt} + \gamma_s^{tt} = 0, \quad \forall  s \in \mathcal{SN}^{all}, tt \in \mathcal{TT}, \\
+    & \alpha_{s,r}^{tt} \geq 0, \quad \forall r\in \mathcal{R}, s \in \mathcal{SN}^{all}, tt \in \mathcal{TT} \\
+    & \text{and (\ref{eqn:traffic_constr1})-(\ref{eqn:traffic_constr3})}, \nonumber
+\end{align}
+where $\alpha_{s,r}^{tt}, \beta_{od}^{tt}, \gamma_s^{tt}$ are the dual variables of constraints (\ref{eqn:traffic_constr1})-(\ref{eqn:traffic_constr3}), respectively. The resulting formulation involves bilinear terms $\beta_{od}^{tt} D_{od}^{tt}$, which can be linearized using the similar technique introduced before.
+
+\subsection{The objective function calculation} 
+The remaining nonlinear terms are in the objective function, e.g.,  $\sum_{tt \in \mathcal{TT}}\sum_{h\in \mathcal{H}}\sum_{(o,d)\in \mathcal{Q}} d_{od,h,tt}^{HV} \times (tc^{HV}_{od,h,tt}+ope^{HV}_{od,tt}+env^{HV}_{od,tt})$. If we assume the costs $tc^{HV}_{od,h,tt}, ope^{HV}_{od,tt}, env^{HV}_{od,tt}$ are all proportional to $a_{od,h,tt}^{HV}$, then the calculation of them should be straightforward.
+
+%where $U^m(\cdot),\ m\in \{R, B\}$ denote the utility function of a transport mode ($R$ for taxi/ride hailing and $B$ for biking). If the public transit option can involve biking in its first/last mile segment, then the utility value $u^{PT}_{i, h}$ also depends on $\mathbf{x}$, which implies that the construction of bike lanes would encourage the use of public transit system.
+
+%We may need to consider the more than one possible bike path from $o$ to $d$. 
+\subsection{Data Set}
+We have two main sources of data: taxi trips and Citi bike trips. 
+\ACKNOWLEDGMENT{ The authors want to thank Professor Vikrant Vaze at Dartmouth, Professor Alexandre Jacquillat at MIT for their value comments and suggestions.
+}
+\bibliographystyle{InformsTemplate/informs2014trsc}
+\bibliography{Reference/abbr,Reference/referee}
+\end{document}
+
+
